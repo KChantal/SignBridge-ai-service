@@ -1,0 +1,8 @@
+## License
+
+Copyright © 2025 K. Wysocki. All rights reserved.
+
+This software is the intellectual property of the author.  
+No permission is granted to use, reproduce, copy, modify, or distribute any part of this codebase without express written consent.
+
+This repository is provided for demonstration and informational purposes only.
