@@ -1,4 +1,12 @@
 .env
 
-venv
-__pycache__
+# Ignore Python virtual environment
+venv/
+
+# Ignore compiled Python files
+__pycache__/
+*.pyc
+*.pyo
+
+# Ignore logs
+*.log
