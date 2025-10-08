@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 # Initialize FastAPI app
 app = FastAPI(
     title="Here & Hear AI Service",
-    description="AI-powered speech processing service",
+    description="AI-powered speech processing and BSL avatar generation service",
     version="0.1.0"
 )
 
@@ -49,7 +49,7 @@ async def health_check():
     return {
         "status": "healthy",
         "services": {
-            "speech_processing": "ready",
+            "speech_processing": "ready"
         }
     }
 
@@ -110,40 +110,6 @@ async def websocket_live_transcription(websocket: WebSocket):
         logger.info("Client disconnected from live transcription")
     except Exception as e:
         logger.error(f"WebSocket error: {str(e)}")
-        await websocket_manager.disconnect(websocket)
-
-@app.websocket("/ws/phone-call")
-async def websocket_phone_call(websocket: WebSocket):
-    """
-    WebSocket endpoint for phone call routing with live transcription
-    """
-    await websocket_manager.connect(websocket)
-    
-    try:
-        while True:
-            data = await websocket.receive_json()
-            
-            if data.get("type") == "call_audio":
-                # Process call audio
-                audio_data = data.get("audio")
-                transcription = await speech_service.transcribe_realtime(audio_data)
-                
-                await websocket_manager.send_personal_message(
-                    json.dumps({
-                        "type": "call_transcription",
-                        "text": transcription.get("text", ""),
-                        "speaker": data.get("speaker", "unknown"),
-                        "timestamp": speech_service.get_timestamp(),
-                        "language": "en-GB"
-                    }),
-                    websocket
-                )
-    
-    except WebSocketDisconnect:
-        websocket_manager.disconnect(websocket)
-        logger.info("Client disconnected from phone call")
-    except Exception as e:
-        logger.error(f"Phone call WebSocket error: {str(e)}")
         await websocket_manager.disconnect(websocket)
 
 if __name__ == "__main__":

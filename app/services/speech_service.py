@@ -29,11 +29,6 @@ try:
 except ImportError:
     AudioSegment = None
 
-try:
-    import azure.cognitiveservices.speech as speechsdk
-except ImportError:
-    speechsdk = None
-
 from ..config import get_settings
 
 logger = logging.getLogger(__name__)
@@ -47,25 +42,12 @@ class SpeechService:
         
         # Initialize API clients
         self._init_openai()
-        self._init_azure()
         
     def _init_openai(self):
         """Initialize OpenAI client"""
         if self.settings.OPENAI_API_KEY and openai:
             openai.api_key = self.settings.OPENAI_API_KEY
             logger.info("OpenAI client initialized")
-    
-    def _init_azure(self):
-        """Initialize Azure Speech client"""
-        if (self.settings.AZURE_SPEECH_KEY and 
-            self.settings.AZURE_SPEECH_REGION and 
-            speechsdk):
-            self.azure_speech_config = speechsdk.SpeechConfig(
-                subscription=self.settings.AZURE_SPEECH_KEY,
-                region=self.settings.AZURE_SPEECH_REGION
-            )
-            self.azure_speech_config.speech_recognition_language = "en-GB"
-            logger.info("Azure Speech client initialized")
     
     async def transcribe(self, audio_data: Union[bytes, str]) -> Dict:
         """Transcribe audio data to text"""
@@ -74,8 +56,6 @@ class SpeechService:
             
             if engine == "openai" and openai:
                 return await self._transcribe_openai(audio_data)
-            elif engine == "azure" and speechsdk:
-                return await self._transcribe_azure(audio_data)
             else:
                 return await self._transcribe_whisper_local(audio_data)
                 
@@ -141,40 +121,6 @@ class SpeechService:
             
         except Exception as e:
             logger.error(f"Whisper transcription error: {str(e)}")
-            return {"text": "", "confidence": 0.0, "error": str(e)}
-    
-    async def _transcribe_azure(self, audio_data: Union[bytes, str]) -> Dict:
-        """Transcribe using Azure Speech Services"""
-        try:
-            if not speechsdk:
-                return {"text": "", "confidence": 0.0, "error": "Azure Speech SDK not installed"}
-                
-            if isinstance(audio_data, bytes):
-                stream = speechsdk.audio.PushAudioInputStream()
-                audio_config = speechsdk.audio.AudioConfig(stream=stream)
-                stream.write(audio_data)
-                stream.close()
-            else:
-                audio_config = speechsdk.audio.AudioConfig(filename=audio_data)
-            
-            speech_recognizer = speechsdk.SpeechRecognizer(
-                speech_config=self.azure_speech_config,
-                audio_config=audio_config
-            )
-            
-            result = await asyncio.to_thread(speech_recognizer.recognize_once)
-            
-            if result.reason == speechsdk.ResultReason.RecognizedSpeech:
-                return {
-                    "text": result.text,
-                    "confidence": 0.9,
-                    "language": "en-GB"
-                }
-            else:
-                return {"text": "", "confidence": 0.0, "error": "No speech recognized"}
-                
-        except Exception as e:
-            logger.error(f"Azure transcription error: {str(e)}")
             return {"text": "", "confidence": 0.0, "error": str(e)}
     
     async def transcribe_realtime(self, audio_chunk: bytes) -> Dict:
