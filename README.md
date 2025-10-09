@@ -6,4 +6,4 @@ Supports functionality for all aspects of speech processing, transcription, and 
 
 ---
 
-⚠️ **License**: This project is not open source. See [LICENSE.txt](./LICENSE.txt) for details.
+💡 Contributions or ideas welcome for Hacktoberfest contributions, issues, and PRs 💡
